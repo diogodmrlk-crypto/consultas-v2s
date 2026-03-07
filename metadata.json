@@ -1,0 +1,8 @@
+{
+  "name": "consultas de tudo",
+  "description": "Uma plataforma de consulta de dados ultra-moderna com ferramentas de busca avançadas para CPF, Telefone e muito mais.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
