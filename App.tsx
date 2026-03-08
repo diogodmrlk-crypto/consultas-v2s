@@ -24,14 +24,11 @@ import ToolCard from './components/ToolCard';
 import SearchModal from './components/SearchModal';
 import { ServiceTool } from './types';
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1470946745344196812/R1tVe1gUJ8xK_JwkNugUU78diWt9-exPk58pI5k-ijAnpD1rzZUAZTqVqz3GHAt5zVBr";
-
 const TOOLS: ServiceTool[] = [
-  { id: 'puxar_telefone', title: 'Identificação de Linha', subtitle: 'MÓDULO TELCO', description: 'Relatório detalhado de titularidade e registros cadastrais vinculados.', limitUsed: 15, limitTotal: 100, isPremium: true, category: 'Inteligência', icon: 'Phone' },
-  { id: 'nome_pro', title: 'Busca por Registro', subtitle: 'SISTEMA ALFA', description: 'Identificação de CPFs e endereços através de indexação por nome.', limitUsed: 22, limitTotal: 150, isPremium: false, category: 'Pessoas', icon: 'User' },
+  { id: 'puxar_telefone', title: 'Consultar Telefone', subtitle: 'MÓDULO TELCO', description: 'Relatório detalhado de titularidade e registros cadastrais vinculados.', limitUsed: 15, limitTotal: 100, isPremium: true, category: 'Inteligência', icon: 'Phone' },
+  { id: 'nome_pro', title: 'Nome Completo', subtitle: 'SISTEMA ALFA', description: 'Identificação de CPFs e endereços através de indexação por nome.', limitUsed: 22, limitTotal: 150, isPremium: false, category: 'Pessoas', icon: 'User' },
   { id: 'cpf_completa', title: 'Dossiê Cadastral', subtitle: 'REPORT COMPLETO', description: 'Histórico de registros, situação cadastral e vínculos profissionais.', limitUsed: 5, limitTotal: 250, isPremium: true, category: 'Documentos', icon: 'Database' },
   { id: 'radar', title: 'Consulta Veicular', subtitle: 'SISTEMA AUTO', description: 'Dados técnicos, restrições e histórico de propriedade por placa.', limitUsed: 0, limitTotal: 50, isPremium: true, category: 'Veículos', icon: 'Target' },
-  { id: 'cnpj', title: 'Análise de CNPJ', subtitle: 'B2B INSIGHTS', description: 'Dados societários, faturamento estimado e registros fiscais.', limitUsed: 0, limitTotal: 30, isPremium: true, category: 'Empresas', icon: 'Users' },
   { id: 'skysix', title: 'Geolocalização IP', subtitle: 'GEO ANALYTICS', description: 'Mapeamento de rede e localização aproximada de pontos de acesso.', limitUsed: 0, limitTotal: 10, isPremium: false, category: 'Localização', icon: 'FileText' }
 ];
 
@@ -44,19 +41,28 @@ const App: React.FC = () => {
 
   const trackEvent = async (msg: string) => {
     try {
-      await fetch(WEBHOOK_URL, {
+      const response = await fetch('/api/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: "Nova Intelligence",
+          username: "NOVA INTELLIGENCE ⚡",
+          avatar_url: "https://cdn-icons-png.flaticon.com/512/1041/1041916.png",
           embeds: [{
-            title: "📡 Status",
-            description: msg,
-            color: 0x10b981
+            title: "🌐 ACESSO AO TERMINAL",
+            description: `> **Status:** \`${msg}\``,
+            color: 0x10b981,
+            footer: { text: "Nova.Int • Sistema de Monitoramento Tático" },
+            timestamp: new Date().toISOString()
           }]
         })
       });
-    } catch (e) {}
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Erro ao enviar log:", errorData);
+      }
+    } catch (e) {
+      console.error("Falha na conexão com o servidor:", e);
+    }
   };
 
   useEffect(() => {

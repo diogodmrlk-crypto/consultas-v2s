@@ -2,6 +2,35 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <script>
+        // Fix for "Cannot set property fetch of #<Window> which has only a getter"
+        // This MUST run before any other scripts.
+        (function() {
+            function fixFetch(obj) {
+                try {
+                    if (obj && obj.fetch) {
+                        const descriptor = Object.getOwnPropertyDescriptor(obj, 'fetch');
+                        if (descriptor && !descriptor.writable) {
+                            const originalFetch = obj.fetch;
+                            try {
+                                delete obj.fetch;
+                            } catch (e) {}
+                            Object.defineProperty(obj, 'fetch', {
+                                value: originalFetch,
+                                configurable: true,
+                                writable: true,
+                                enumerable: true
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Fetch fix failed for', obj, e);
+                }
+            }
+            fixFetch(window);
+            fixFetch(globalThis);
+        })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Nova Intelligence | High-End Data Insights</title>

