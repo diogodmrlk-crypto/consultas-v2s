@@ -16,7 +16,8 @@ import {
   FileText,
   Activity,
   Globe,
-  Lock
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -38,6 +39,41 @@ const App: React.FC = () => {
   const [selectedTool, setSelectedTool] = useState<ServiceTool | null>(null);
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
+
+  const [webhookStatus, setWebhookStatus] = useState<{configured: boolean, checked: boolean, error?: string}>({configured: false, checked: false});
+
+  const checkWebhook = async () => {
+    try {
+      const res = await fetch('/api/status');
+      const data = await res.json();
+      setWebhookStatus({ configured: data.webhook_configured, checked: true });
+    } catch (e: any) {
+      console.error("Erro ao verificar status da webhook:", e);
+      setWebhookStatus({ configured: false, checked: true, error: e.message });
+    }
+  };
+
+  const testWebhook = async () => {
+    try {
+      const response = await fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: "🔔 **TESTE DE CONEXÃO**: Se você está vendo isso, sua Webhook está funcionando perfeitamente!",
+          username: "TESTE DE SISTEMA",
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`❌ ERRO DO DISCORD: ${errorData.details || errorData.error}`);
+      } else {
+        alert("✅ SUCESSO! Verifique seu canal no Discord.");
+      }
+    } catch (e: any) {
+      alert(`❌ FALHA NA CONEXÃO: ${e.message}`);
+    }
+  };
 
   const trackEvent = async (msg: string) => {
     try {
@@ -67,6 +103,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     setIsReady(true);
+    checkWebhook();
     trackEvent("Sessão Iniciada");
   }, []);
 
@@ -77,6 +114,27 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden text-zinc-100">
+      {webhookStatus.checked && !webhookStatus.configured && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-red-500/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl border border-red-400 flex flex-col items-center gap-2 animate-bounce">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-xs font-black uppercase tracking-widest">Webhook não configurada!</span>
+            <button 
+              onClick={() => checkWebhook()}
+              className="ml-2 bg-white text-red-600 px-3 py-1 rounded-full text-[10px] font-bold hover:bg-zinc-100 transition-colors"
+            >
+              RETESTAR
+            </button>
+            <button 
+              onClick={() => testWebhook()}
+              className="ml-1 bg-emerald-500 text-white px-3 py-1 rounded-full text-[10px] font-bold hover:bg-emerald-600 transition-colors"
+            >
+              ENVIAR TESTE
+            </button>
+          </div>
+          <p className="text-[9px] opacity-80 font-medium">Configure DISCORD_WEBHOOK_URL nos "Secrets" do AI Studio ou "Environment Variables" da Vercel.</p>
+        </div>
+      )}
       <Sidebar 
         isOpen={isSidebarOpen} 
         setOpen={setSidebarOpen} 

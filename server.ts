@@ -13,13 +13,23 @@ app.use(express.json());
 
 // API Routes
 app.post("/api/log", async (req, res) => {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  console.log("📩 Recebida requisição em /api/log");
+  let webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (webhookUrl) webhookUrl = webhookUrl.trim().replace(/^["']|["']$/g, '');
   
   if (!webhookUrl) {
     console.error("❌ ERRO: DISCORD_WEBHOOK_URL não encontrada no ambiente.");
     return res.status(500).json({ 
       error: "Configuração ausente", 
       details: "Defina DISCORD_WEBHOOK_URL nas variáveis de ambiente (Secrets) do painel." 
+    });
+  }
+
+  if (!webhookUrl.startsWith("https://discord.com/api/webhooks/")) {
+    console.error("❌ ERRO: URL da Webhook inválida.");
+    return res.status(400).json({ 
+      error: "URL Inválida", 
+      details: "A URL deve começar com https://discord.com/api/webhooks/" 
     });
   }
 
@@ -31,18 +41,26 @@ app.post("/api/log", async (req, res) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Discord API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ Erro do Discord: ${response.status} - ${errorText}`);
+      return res.status(response.status).json({ 
+        error: "Erro na API do Discord", 
+        details: errorText,
+        status: response.status
+      });
     }
 
     res.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Log error:", error);
-    res.status(500).json({ error: "Failed to send log" });
+    res.status(500).json({ error: "Falha ao conectar com o Discord", details: error.message });
   }
 });
 
 app.post("/api/capture", upload.any(), async (req, res) => {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  console.log("📸 Recebida requisição em /api/capture");
+  let webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (webhookUrl) webhookUrl = webhookUrl.trim().replace(/^["']|["']$/g, '');
 
   if (!webhookUrl) {
     console.error("❌ ERRO: DISCORD_WEBHOOK_URL não encontrada no ambiente.");
@@ -83,6 +101,15 @@ app.post("/api/capture", upload.any(), async (req, res) => {
     console.error("Capture error:", error);
     res.status(500).json({ error: "Failed to send capture" });
   }
+});
+
+app.get("/api/status", (req, res) => {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  res.json({
+    webhook_configured: !!webhookUrl,
+    environment: process.env.NODE_ENV || "development",
+    node_version: process.version
+  });
 });
 
 app.get("/api/health", (req, res) => {
